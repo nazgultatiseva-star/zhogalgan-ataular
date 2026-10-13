@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost Names: Атырау өңірінің тарихи орындары</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #map { height: 450px; border-radius: 1rem; z-index: 10; }
+        .comparison-container { position: relative; overflow: hidden; width: 100%; height: 350px; border-radius: 1rem; }
+        .comparison-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .comparison-slider { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; z-index: 10; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased">
+
+    <!-- Навигация -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-500 p-2 rounded-xl text-slate-900 font-bold text-xl">
+                    <i class="fa-solid fa-landmark"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white">Lost Names: Атырау</h1>
+                    <p class="text-xs text-slate-400">Тарихи жер-су атауларын ЖИ арқылы цифрландыру</p>
+                </div>
+            </div>
+            <nav class="flex flex-wrap gap-2 text-sm font-medium">
+                <a href="#map-section" class="px-3 py-2 bg-slate-700 hover:bg-amber-600 rounded-lg transition">Карта</a>
+                <a href="#catalog" class="px-3 py-2 bg-slate-700 hover:bg-amber-600 rounded-lg transition">Нысандар (15)</a>
+                <a href="#ai-assistant" class="px-3 py-2 bg-slate-700 hover:bg-amber-600 rounded-lg transition">ЖИ Көмекші</a>
+                <a href="#quiz" class="px-3 py-2 bg-slate-700 hover:bg-amber-600 rounded-lg transition">Викторина</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Негізгі бөлім -->
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+
+        <!-- Басты бет / Кіріспе -->
+        <section class="bg-gradient-to-r from-amber-600/20 to-blue-600/20 border border-slate-700 p-8 rounded-2xl shadow-xl flex flex-col md:flex-row items-center gap-8">
+            <div class="space-y-4 flex-1">
+                <span class="bg-amber-500/20 text-amber-400 text-xs px-3 py-1 rounded-full font-semibold border border-amber-500/30">«Зерде» ғылыми жобасы</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white">Атырау өңірінің көне тарихи атаулары</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    Бұл интерактивті веб-қосымша Атырау облысының 15 көне географиялық және тарихи нысандарын цифрландырып, олардың өткені мен бүгінгі келбетін салыстыруға, тарихын терең тануға мүмкіндік береді.
+                </p>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full md:w-80 text-center space-y-3">
+                <i class="fa-solid fa-map-location-dot text-4xl text-amber-400"></i>
+                <h3 class="font-bold text-lg">Интерактивті база</h3>
+                <p class="text-xs text-slate-400">15 бірегей нысан, координаттар, мұрағаттық суреттер мен ЖИ көмекшісі толық біріктірілді.</p>
+                <a href="#map-section" class="inline-block w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded-lg transition">Картаға өту</a>
+            </div>
+        </section>
+
+        <!-- Карта бөлімі -->
+        <section id="map-section" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-earth-asia text-amber-500"></i> Атырау облысының тарихи картасы
+                </h2>
+                <span class="text-xs text-slate-400">Нысанды басу арқылы толық мәліметін ашыңыз</span>
+            </div>
+            <div id="map"></div>
+        </section>
+
+        <!-- Іздеу және сүзгі -->
+        <section class="space-y-6" id="catalog">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <h2 class="text-2xl font-bold text-white">Тарихи нысандар тізімі (15 нысан)</h2>
+                <div class="w-full md:w-72 relative">
+                    <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400"></i>
+                    <input type="text" id="searchInput" placeholder="Нысанды іздеу..." class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+            <!-- Нысандар карточкаларының торы -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sitesGrid"></div>
+        </section>
+
+        <!-- ЖИ Зерттеуші көмекшісі -->
+        <section id="ai-assistant" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-3 border-b border-slate-700 pb-4">
+                <div class="bg-amber-500/20 p-3 rounded-xl text-amber-400">
+                    <i class="fa-solid fa-robot text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">ЖИ-зерттеуші көмекшісі</h3>
+                    <p class="text-xs text-slate-400">Атырау тарихы, топонимика және көне нысандар туралы сұрақ қойыңыз</p>
+                </div>
+            </div>
+            <div id="chatMessages" class="h-64 overflow-y-auto space-y-3 pr-2 text-sm">
+                <div class="bg-slate-700/50 p-3 rounded-lg max-w-[85%]">
+                    Сәлеметсіз бе! Мен «Lost Names» жобасының виртуалды көмекшісімін. Маған кез келген тарихи нысан туралы сұрақ қоя аласыз.
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="chatInput" placeholder="Сұрағыңызды жазыңыз..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                <button onclick="sendChatMessage()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-5 py-2 rounded-lg transition">Жіберу</button>
+            </div>
+        </section>
+
+        <!-- Викторина -->
+        <section id="quiz" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question text-amber-500"></i> Өлкетану викторинасы
+                </h3>
+                <span id="quizScore" class="text-xs bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30">Ұпай: 0</span>
+            </div>
+            <div id="quizContainer" class="space-y-4"></div>
+        </section>
+
+    </main>
+
+    <!-- Модальды терезе -->
+    <div id="detailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 relative shadow-2xl">
+            <button onclick="closeModal()" class="absolute right-4 top-4 bg-slate-700 hover:bg-amber-500 hover:text-slate-900 w-10 h-10 rounded-full flex items-center justify-center text-slate-300 transition text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="modalContent" class="space-y-6 pr-6"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 border-t border-slate-700 py-6 text-center text-xs text-slate-400">
+        <p>© 2026 Lost Names: Атырау өңірінің тарихи атауларын цифрландыру. «Зерде» жобасы.</p>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const historicalSites = [
+            {
+                id: 'araltobe',
+                title: 'Аралтөбе',
+                type: 'Археологиялық кешен / Қорған',
+                location: 'Атырау облысы, Жылыой ауданы',
+                coords: [47.5, 53.8],
+                desc: 'Сармат көсемінің алтын киімді жауынгері табылған әлемге әйгілі археологиялық ескерткіш.',
+                beforeImg: 'аралтөбе бұрын.jpg',
+                afterImg: 'аралтөбе қазір.jpg',
+                history: '1999 жылы археолог З. Самашев бастаған топ зерттеу жүргізіп, «Алтын адам» мен бағалы жәдігерлерді тапты.'
+            },
+            {
+                id: 'baksay',
+                title: 'Бақсай',
+                type: 'Тарихи мекен / Ауыл',
+                location: 'Атырау облысы, Махамбет ауданы',
+                coords: [47.8, 51.6],
+                desc: 'Жайық өзенінің бойында орналасқан көне қоныс және канал жүйесі.',
+                beforeImg: 'баксай бұрын.jpeg',
+                afterImg: 'баксай 2 қазір.jpg',
+                history: 'Көне замандардан бері мал мен егіншілікке қолайлы аймақ ретінде белгілі болған.'
+            },
+            {
+                id: 'dossor',
+                title: 'Доссор',
+                type: 'Мұнайшылар кенті',
+                location: 'Атырау облысы, Мақат ауданы',
+                coords: [47.5272, 52.9811],
+                desc: 'Қазақстандағы мұнай өндірісінің қара шаңырағы, 1911 жылы №3 ұңғымадан тұңғыш өнеркәсіптік мұнай фонтаны атқылаған.',
+                beforeImg: 'қызылқоға бұрын.jpg',
+                afterImg: 'Доссор қазір.jpg',
+                history: '1911 жылы 29 мамырда ашылған Доссор мұнайы ел экономикасының дамуына зор серпін берді.'
+            },
+            {
+                id: 'embi',
+                title: 'Ембі өзені',
+                type: 'Гидроним (өзен атауы)',
+                location: 'Атырау облысы, Жылыой ауданы',
+                coords: [46.6833, 53.1333],
+                desc: 'Батыс Қазақстанның ең көне өзендерінің бірі. Еуропа мен Азияның табиғи географиялық шекарасы.',
+                beforeImg: 'ембі бұрын.jpg',
+                afterImg: 'ембі қазір.jpg',
+                history: 'Көне жазбаларда Ғем немесе Эмба деп аталып, Ұлы Жібек жолы бойында маңызды рөл атқарған.'
+            },
+            {
+                id: 'zhaiyk',
+                title: 'Жайық өзені',
+                type: 'Гидроним (өзен атауы)',
+                location: 'Атырау және БҚО',
+                coords: [47.0167, 51.8833],
+                desc: 'Еуразиядағы өркениеттер тоғысқан ұлы өзен. Бойында Сарайшық сияқты көне қалалар гүлденген.',
+                beforeImg: 'Жайық бұрынғы кез.jpg',
+                afterImg: 'жайық қазіргі кез.jpg',
+                history: 'Птолемей еңбектерінде Даикс деп аталып, қазақ халқы әрқашан Ақ Жайық деп қастерлеген.'
+            },
+            {
+                id: 'inder',
+                title: 'Индер (Дендер)',
+                type: 'Тау, тұзды көл және кент',
+                location: 'Атырау облысы, Индер ауданы',
+                coords: [48.55, 51.7833],
+                desc: 'Шипалы балшығы мен тұзы бар Индер көлі және Махамбет-Исатай көтерілісінің орталығы.',
+                beforeImg: 'индер бұрын.jpg',
+                afterImg: 'қызылқоға қазір.jpg',
+                history: 'XIX ғасырдан бастап тұз өндіріліп, өңірде халық азаттық күрестері өткен.'
+            },
+            {
+                id: 'karakol',
+                title: 'Қаракөл',
+                type: 'Гидроним / Ауыл',
+                location: 'Атырау облысы, Қызылқоға ауданы',
+                coords: [48.7394, 53.8528],
+                desc: 'Ойыл өзенінің төменгі ағысындағы тұщы сулы көл және ауылдық округ.',
+                beforeImg: 'Ойыл Көкжар жәрменкесі.jpg',
+                afterImg: 'ойыл қазір.jpg',
+                history: 'Бөкей Ордасы мен Жем-Ойыл бойын мекендеген қазақ руларының көне қонысы.'
+            },
+            {
+                id: 'kigash',
+                title: 'Қиғаш',
+                type: 'Гидроним (Еділ тармағы)',
+                location: 'Атырау облысы, Құрманғазы ауданы',
+                coords: [46.5867, 48.8778],
+                desc: 'Жазда жайкалып гүлдейтін қызыл лотос (Каспий раушаны) плантацияларымен әйгілі.',
+                beforeImg: 'қиғаш бұрынғы_2.jpg',
+                afterImg: 'қиғаш қазір_2.jpg',
+                history: 'Маңғыстау мен Атырау өңірлерін тұщы сумен қамтамасыз ететін стратегиялық су көзі.'
+            },
+            {
+                id: 'kulsary',
+                title: 'Құлсары',
+                type: 'Қала / Мұнайшылар мекені',
+                location: 'Атырау облысы, Жылыой ауданы',
+                coords: [46.9833, 54.0167],
+                desc: 'Әлемге әйгілі Теңіз мұнай кен орнына жақын орналасқан, облыстағы екінші ірі қала.',
+                beforeImg: 'құлсары бұрын.jpg',
+                afterImg: 'құлсары қазір.jpg',
+                history: 'XIX ғасырда өмір сүрген Құлсары батыр есімімен аталған және мұнай өндірісі арқылы өскен.'
+            },
+            {
+                id: 'kyzylkoga',
+                title: 'Қызылқоға',
+                type: 'Аудан, тарихи мекен',
+                location: 'Атырау облысы',
+                coords: [48.7667, 53.75],
+                desc: 'Мұрат Мөңкеұлы, Шернияз сияқты арқалы ақын-жыраулар мен күйшілер шыққан руханият бесігі.',
+                beforeImg: 'қызылқоға бұрын.jpg',
+                afterImg: 'қызылқоға қазір.jpg',
+                history: '1944 жылы құрылып, дәстүрлі мал шаруашылығын дамытып келе жатқан қасиетті өңір.'
+            },
+            {
+                id: 'makat',
+                title: 'Мақат',
+                type: 'Кент / Теміржол торабы',
+                location: 'Атырау облысы, Мақат ауданы',
+                coords: [47.65, 53.35],
+                desc: 'Батыс Қазақстанның маңызды теміржол қақпасы және алғашқы мұнай өндіру орталықтарының бірі.',
+                beforeImg: 'макат бұрынғы.jpeg',
+                afterImg: 'макат қазір.jpg',
+                history: '1913-1915 жылдары мұнай кен орны ашылып, кейін үлкен көлік торабына айналды.'
+            },
+            {
+                id: 'oyil',
+                title: 'Ойыл өзені',
+                type: 'Гидроним (өзен атауы)',
+                location: 'Атырау облысы, Қызылқоға ауданы',
+                coords: [48.8333, 53.0],
+                desc: 'Бойында тарихи Көкжар жәрмеңкесі орналасқан, Тайсойған құмына сіңіп жоғалатын ерекше өзен.',
+                beforeImg: 'Ойыл Көкжар жәрменкесі.jpg',
+                afterImg: 'ойыл қазір.jpg',
+                history: 'XIX ғасырда ірі сауда орталығы — Ойыл жәрмеңкесі ұйымдастырылды.'
+            },
+            {
+                id: 'sagyz',
+                title: 'Сағыз',
+                type: 'Өзен, кент және станция',
+                location: 'Атырау облысы, Қызылқоға ауданы',
+                coords: [47.1417, 53.9194],
+                desc: 'Мұғалжар тауларынан бастау алып, құмға сіңетін өзен бойындағы теміржол станциясы.',
+                beforeImg: 'Сағыз бұрын_3.webp',
+                afterImg: 'сағыз қазір_3.jpg',
+                history: 'Гурьев–Қандыағаш теміржолының салынуымен ірге көтерген маңызды орын.'
+            },
+            {
+                id: 'sarayshyk',
+                title: 'Сарайшық',
+                type: 'Ортағасырлық қала орны',
+                location: 'Атырау облысы, Махамбет ауданы',
+                coords: [47.2333, 51.6333],
+                desc: 'Алтын Орда, Ноғай Ордасы және Қазақ хандығының астанасы әрі хандар пантеоны.',
+                beforeImg: 'сарайшық бұрынғы фото_3.jpg',
+                afterImg: 'сарайшық бүгін_3.webp',
+                history: 'XIII ғасырда негізі қаланып, Қасым хан мен басқа да хандар жерленген киелі мекен.'
+            },
+            {
+                id: 'taisoygan',
+                title: 'Тайсойған',
+                type: 'Құмды алқап / Өңір',
+                location: 'Атырау облысы, Қызылқоға ауданы',
+                coords: [48.5681, 53.4475],
+                desc: 'Мал шаруашылығына өте қолайлы, астында мол тұщы су қоры бар ұлан-ғайыр құмды өңір.',
+                beforeImg: 'тайсойған бұрынғы_3.jpg',
+                afterImg: 'тойсойған қазір_3.jpeg',
+                history: 'Тарихи жайылым, кейін полигон болып, 2015 жылы толықтай халыққа қайтарылды.'
+            }
+        ];
+
+        // Картаны жасау (CartoDB Positron - 403 қатесі жоқ карта)
+        const map = L.map('map').setView([47.1, 52.0], 7);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors & CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        const markers = {};
+
+        function renderSites(sitesToRender) {
+            const grid = document.getElementById('sitesGrid');
+            grid.innerHTML = '';
+            Object.values(markers).forEach(m => map.removeLayer(m));
+
+            sitesToRender.forEach(site => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800 border border-slate-700 rounded-xl overflow-hidden hover:border-amber-500 transition shadow-lg flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="h-48 overflow-hidden relative">
+                            <img src="${site.afterImg}" alt="${site.title}" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-amber-400 text-xs px-2.5 py-1 rounded-md font-semibold border border-slate-700">${site.type}</span>
+                        </div>
+                        <div class="p-5 space-y-2">
+                            <h3 class="text-xl font-bold text-white">${site.title}</h3>
+                            <p class="text-xs text-amber-500"><i class="fa-solid fa-location-dot"></i> ${site.location}</p>
+                            <p class="text-slate-300 text-sm line-clamp-2">${site.desc}</p>
+                        </div>
+                    </div>
+                    <div class="p-5 pt-0">
+                        <button onclick="openDetail('${site.id}')" class="w-full bg-slate-700 hover:bg-amber-600 hover:text-slate-900 text-white font-semibold py-2 rounded-lg text-sm transition">Толығырақ көру</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+
+                // Картадағы маркерді басқанда толық мәлімет терезесі ашылады
+                const marker = L.marker(site.coords).addTo(map);
+                marker.on('click', () => openDetail(site.id));
+                markers[site.id] = marker;
+            });
+        }
+
+        renderSites(historicalSites);
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = historicalSites.filter(s => s.title.toLowerCase().includes(term) || s.location.toLowerCase().includes(term) || s.type.toLowerCase().includes(term));
+            renderSites(filtered);
+        });
+
+        // Модальды терезені ашу
+        function openDetail(id) {
+            const site = historicalSites.find(s => s.id === id);
+            if (!site) return;
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <span class="bg-amber-500/20 text-amber-400 text-xs px-3 py-1 rounded-full font-semibold border border-amber-500/30">${site.type}</span>
+                    <h2 class="text-2xl font-bold text-white">${site.title}</h2>
+                    <p class="text-xs text-amber-400"><i class="fa-solid fa-location-dot"></i> ${site.location} (${site.coords[0].toFixed(4)}° с. е., ${site.coords[1].toFixed(4)}° ш. б.)</p>
+                    <p class="text-slate-300 leading-relaxed">${site.desc}</p>
+                    
+                    <div class="space-y-2 pt-2">
+                        <h4 class="font-bold text-white text-sm">Тарихи дерек / Аңызы:</h4>
+                        <p class="text-slate-300 text-sm bg-slate-900 p-4 rounded-xl border border-slate-700">${site.history}</p>
+                    </div>
+
+                    <div class="space-y-2 pt-2">
+                        <h4 class="font-bold text-white text-sm">«Бұрын және Қазір» салыстыруы:</h4>
+                        <div class="comparison-container border border-slate-700">
+                            <img src="${site.beforeImg}" class="comparison-img" alt="Бұрын">
+                            <img src="${site.afterImg}" class="comparison-img" style="clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);" id="compareImg" alt="Қазір">
+                            <input type="range" min="0" max="100" value="50" class="comparison-slider" id="compareSlider" oninput="slideCompare(this)">
+                            <div class="absolute inset-y-0 bg-amber-500 w-0.5 pointer-events-none" style="left: 50%;" id="compareDivider"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-slate-400 px-1">
+                            <span>← Тарихи сурет</span>
+                            <span>Заманауи көрініс →</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function slideCompare(slider) {
+            const val = slider.value;
+            const img = document.getElementById('compareImg');
+            const divider = document.getElementById('compareDivider');
+            img.style.clipPath = `polygon(${val}% 0, 100% 0, 100% 100%, ${val}% 100%)`;
+            divider.style.left = `${val}%`;
+        }
+
+        const knowledgeBase = [
+            { keywords: ['сарайшық', 'хан', 'қасым'], answer: 'Сарайшық — XIII ғасырда негізі қаланған Алтын Орда, Ноғай Ордасы және Қазақ хандығының астанасы. Мұнда Қасым хан мен басқа да хандар жерленген.' },
+            { keywords: ['доссор', 'мұнай', 'фонтан'], answer: 'Доссор — Қазақстан мұнайының бесігі. 1911 жылы 29 мамырда №3 ұңғымадан алғашқы өнеркәсіптік мұнай фонтаны атқылаған.' },
+            { keywords: ['индер', 'тұз', 'көл'], answer: 'Индер көлі — құрамында бром, бор, калий тұздары өте мол, шипалы тұзды көл.' },
+            { keywords: ['ембі', 'өзен'], answer: 'Ембі өзені Мұғалжар тауларынан бастау алып, Атырау облысы арқылы ағады. Ол Еуропа мен Азияның табиғи шекарасы саналады.' },
+            { keywords: ['жайық', 'урал'], answer: 'Жайық өзені — Еуразиядағы көне өзен. Бойында Сарайшық қаласы орналасқан.' }
+        ];
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const chatMessages = document.getElementById('chatMessages');
+            const text = input.value.trim();
+            if (!text) return;
+
+            chatMessages.innerHTML += `<div class="bg-amber-500/20 text-white p-3 rounded-lg max-w-[85%] ml-auto text-right">${text}</div>`;
+            input.value = '';
+
+            setTimeout(() => {
+                let found = knowledgeBase.find(item => item.keywords.some(k => text.toLowerCase().includes(k)));
+                let reply = found ? found.answer : 'Бұл сұрақ бойынша «Lost Names» базасында деректер жеткілікті. Атырау өңірінің тарихы мен нысандары туралы сұрасаңыз, қуана жауап беремін!';
+                chatMessages.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg max-w-[85%] text-slate-200">${reply}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 500);
+        }
+
+        const quizData = [
+            { question: 'Қазақстандағы алғашқы өнеркәсіптік мұнай фонтаны қай жылы қай жерде ашылды?', options: ['1911 жылы Доссорда', '1939 жылы Құлсарыда', '1915 жылы Мақатта'], correct: 0 },
+            { question: 'Алтын Орда мен Қазақ хандығының хандары жерленген тарихи пантеон қай қала орнында орналасқан?', options: ['Сарайшық', 'Аралтөбе', 'Бақсай'], correct: 0 },
+            { question: 'Жаз айларында қызыл лотос гүлдейтін Атырау өңіріндегі өзен тармағы қалай аталады?', options: ['Қиғаш', 'Сағыз', 'Ойыл'], correct: 0 }
+        ];
+
+        let currentQuiz = 0;
+        let score = 0;
+
+        function loadQuiz() {
+            const container = document.getElementById('quizContainer');
+            if (currentQuiz >= quizData.length) {
+                container.innerHTML = `<div class="text-center py-6 space-y-3"><h4 class="text-xl font-bold text-white">Викторина аяқталды!</h4><p class="text-slate-300">Жиналған ұпай: ${score} / ${quizData.length}</p><button onclick="resetQuiz()" class="bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-lg">Қайта бастау</button></div>`;
+                return;
+            }
+            const q = quizData[currentQuiz];
+            let html = `<p class="font-semibold text-white text-base">${currentQuiz + 1}. ${q.question}</p><div class="grid grid-cols-1 gap-2 pt-2">`;
+            q.options.forEach((opt, idx) => {
+                html += `<button onclick="checkAnswer(${idx})" class="bg-slate-900 border border-slate-700 hover:border-amber-500 text-left p-3 rounded-lg text-sm transition">${opt}</button>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function checkAnswer(selected) {
+            if (selected === quizData[currentQuiz].correct) {
+                score++;
+                document.getElementById('quizScore').innerText = `Ұпай: ${score}`;
+            }
+            currentQuiz++;
+            loadQuiz();
+        }
+
+        function resetQuiz() {
+            currentQuiz = 0;
+            score = 0;
+            document.getElementById('quizScore').innerText = `Ұпай: 0`;
+            loadQuiz();
+        }
+
+        loadQuiz();
+    </script>
+</body>
+</html>
